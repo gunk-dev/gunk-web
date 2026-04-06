@@ -6,14 +6,29 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          persist-credentials: false
 
-      - name: Validate index.html exists
-        run: test -f index.html
+      - uses: DeterminateSystems/nix-installer-action@e50d5f73bfe71c2dd0aa4218de8f4afa59f8f81d
 
-      - name: Build Docker image
-        run: docker build -t gunk-web .
+      - name: Flake check
+        run: nix flake check
+
+      - name: Build
+        run: nix build
+
+      - name: Verify output
+        run: |
+          test -f result/index.html
+          test -f result/Caddyfile
+
+      - name: Lint
+        run: nix develop -c nixfmt --check .
