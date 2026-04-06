@@ -1,0 +1,17 @@
+{
+  "id": "20260406-1917-02dc",
+  "prompt": "Replace Dockerfile with a Nix flake. This is a NixOS shop — no Dockerfiles.\n\n## Context\nThe flux repo (github.com/gunk-dev/flux) exports static assets via a Nix flake (packages.default = stdenv.mkDerivation that copies files to $out). The infra repo (gunk-dev/infra) then consumes that flake as an input and builds the OCI image using pkgs.dockerTools.buildLayeredImage with Caddy.\n\ngunk-web should follow the exact same pattern.\n\n## What to do\n\n### 1. Delete the Dockerfile\n\n### 2. Create flake.nix\n\nFollow the flux pattern. The flake should:\n- Export packages.default as a stdenv.mkDerivation that copies the static files (index.html, Caddyfile) to $out\n- Include a devShell with basic tools (nixfmt-rfc-style for linting)\n- Use nixpkgs-unstable and flake-utils inputs\n\n```nix\n{\n  description = \"gunk.dev - static website\";\n\n  inputs = {\n    nixpkgs.url = \"github:NixOS/nixpkgs/nixos-unstable\";\n    flake-utils.url = \"github:numtide/flake-utils\";\n  };\n\n  outputs = { self, nixpkgs, flake-utils }:\n    flake-utils.lib.eachDefaultSystem (system:\n      let\n        pkgs = nixpkgs.legacyPackages.${system};\n      in\n      {\n        packages.default = pkgs.stdenv.mkDerivation {\n          pname = \"gunk-web\";\n          version = \"1.0.0\";\n          src = ./.;\n          installPhase = ''\n            mkdir -p $out\n            cp index.html Caddyfile $out/\n          '';\n        };\n\n        devShells.default = pkgs.mkShell {\n          packages = with pkgs; [\n            nixfmt-rfc-style\n          ];\n        };\n      });\n}\n```\n\n### 3. Update .github/workflows/ci.yml\n\nReplace the Docker build step with Nix-based CI. Follow the flux/balance pattern:\n- Use DeterminateSystems/nix-installer-action (pinned SHA: e50d5f73bfe71c2dd0aa4218de8f4afa59f8f81d)\n- Validate: nix flake check\n- Build: nix build (builds packages.default)\n- Lint: nix develop -c nixfmt --check .\n- Pin all action SHAs, add persist-credentials: false, add permissions blocks\n\n### 4. Generate flake.lock\n\nRun `nix flake update` to generate the lock file.\n\n## Acceptance criteria\n- No Dockerfile in the repo\n- flake.nix exports packages.default with index.html and Caddyfile\n- `nix build` succeeds and result/ contains the static files\n- CI workflow uses Nix, not Docker\n- `nix flake check` passes",
+  "issue": null,
+  "branch": "agent/20260406-1917-02dc",
+  "worktree": "/tmp/klaus-sessions/gunk-web/20260406-1917-02dc",
+  "tmux_pane": "%19",
+  "budget": "5.00",
+  "log_file": "/home/patrick/.klaus/sessions/session-20260406-1645-30f4/logs/20260406-1917-02dc.jsonl",
+  "created_at": "2026-04-06T19:17:09-04:00",
+  "cost_usd": 0.31182575,
+  "duration_ms": 74638,
+  "pr_url": "https://github.com/gunk-dev/gunk-web/pull/2",
+  "target_repo": "gunk-dev/gunk-web",
+  "clone_dir": "/tmp/klaus-sessions/.repos/gunk-dev/gunk-web",
+  "session_name": "20260406-1917-02dc"
+}
