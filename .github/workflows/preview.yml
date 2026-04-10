@@ -1,0 +1,39 @@
+name: Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches: [main]
+
+jobs:
+  dispatch-preview:
+    name: Dispatch Preview
+    if: github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Dispatch to infra
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3
+        with:
+          token: ${{ secrets.INFRA_DISPATCH_TOKEN }}
+          repository: gunk-dev/infra
+          event-type: web-preview
+          client-payload: '{"pr_number": "${{ github.event.pull_request.number }}", "head_sha": "${{ github.event.pull_request.head.sha }}"}'
+
+  dispatch-cleanup:
+    name: Dispatch Preview Cleanup
+    if: github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Dispatch to infra
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3
+        with:
+          token: ${{ secrets.INFRA_DISPATCH_TOKEN }}
+          repository: gunk-dev/infra
+          event-type: web-preview-cleanup
+          client-payload: '{"pr_number": "${{ github.event.pull_request.number }}"}'
