@@ -25,6 +25,7 @@
           installPhase = ''
             mkdir -p $out
             cp index.html Caddyfile $out/
+            cp -r java-snippets $out/
           '';
         };
 

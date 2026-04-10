@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java Snippets - gunk</title>
+    <meta name="description" content="A quick reference for common Java use cases: collections, streams, concurrency, file I/O, and useful patterns.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', 'Courier New', monospace;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.6;
+            padding: 2rem 1.5rem;
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 3rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #21262d;
+        }
+
+        header .breadcrumb {
+            font-size: 0.8rem;
+            margin-bottom: 0.75rem;
+        }
+
+        header .breadcrumb a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+
+        header .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        header .breadcrumb span {
+            color: #8b949e;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #e6edf3;
+            margin-bottom: 0.5rem;
+        }
+
+        header > p {
+            color: #8b949e;
+            font-size: 0.95rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #e6edf3;
+            margin-bottom: 1.25rem;
+            text-transform: lowercase;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .snippet {
+            margin-bottom: 1.5rem;
+        }
+
+        .snippet h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #e6edf3;
+            margin-bottom: 0.25rem;
+        }
+
+        .snippet p {
+            font-size: 0.8rem;
+            color: #8b949e;
+            margin-bottom: 0.5rem;
+        }
+
+        pre {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            font-size: 0.825rem;
+            line-height: 1.5;
+        }
+
+        code {
+            font-family: inherit;
+            color: #c9d1d9;
+        }
+
+        p code {
+            background: #161b22;
+            padding: 0.15em 0.35em;
+            border-radius: 3px;
+            font-size: 0.85em;
+        }
+
+        /* Syntax highlighting */
+        .kw { color: #ff7b72; }
+        .type { color: #ff7b72; }
+        .str { color: #a5d6ff; }
+        .num { color: #79c0ff; }
+        .cm { color: #8b949e; font-style: italic; }
+        .fn { color: #d2a8ff; }
+        .ann { color: #d2a8ff; }
+        .op { color: #c9d1d9; }
+        .generic { color: #ffa657; }
+
+        nav.toc {
+            margin-bottom: 3rem;
+        }
+
+        nav.toc h2 {
+            border-bottom: none;
+            margin-bottom: 0.75rem;
+        }
+
+        nav.toc ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        nav.toc li {
+            margin-bottom: 0.35rem;
+        }
+
+        nav.toc a {
+            color: #58a6ff;
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+
+        nav.toc a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            padding-top: 1.5rem;
+            border-top: 1px solid #21262d;
+            font-size: 0.8rem;
+            color: #8b949e;
+        }
+
+        footer a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="breadcrumb">
+            <a href="/">gunk</a> <span>/</span> <span>java-snippets</span>
+        </div>
+        <h1>Java Snippets</h1>
+        <p>A quick reference for common Java use cases. Concise, copy-paste-ready snippets for collections, streams, concurrency, file I/O, strings, and useful patterns &mdash; without the noise.</p>
+    </header>
+
+    <nav class="toc">
+        <h2>contents</h2>
+        <ul>
+            <li><a href="#maps">Maps</a></li>
+            <li><a href="#collections">Collections</a></li>
+            <li><a href="#streams">Streams</a></li>
+            <li><a href="#concurrency">Concurrency</a></li>
+            <li><a href="#files-io">Files &amp; IO</a></li>
+            <li><a href="#strings">Strings</a></li>
+            <li><a href="#patterns">Patterns</a></li>
+            <li><a href="#uri-url">URI / URL Handling</a></li>
+            <li><a href="#persistence-wal">Persistence / WAL</a></li>
+            <li><a href="#language">Java Language</a></li>
+        </ul>
+    </nav>
+
+    <!-- ==================== Maps ==================== -->
+    <section id="maps">
+        <h2>maps</h2>
+
+        <div class="snippet">
+            <h3>Frequency count</h3>
+            <p>Count occurrences of a key. Useful for histograms, mode-finding, and anagram checks.</p>
+            <pre><code><span class="type">Map</span>&lt;<span class="generic">String</span>, <span class="generic">Integer</span>&gt; freq = <span class="kw">new</span> <span class="type">HashMap</span>&lt;&gt;();
+freq.<span class="fn">merge</span>(key, <span class="num">1</span>, Integer::sum);</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Get or default + put</h3>
+            <p>Retrieve a value with a fallback if the key is absent.</p>
+            <pre><code>map.<span class="fn">getOrDefault</span>(key, <span class="num">0</span>) + <span class="num">1</span></code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Compute if absent</h3>
+            <p>Group items by key into lists or sets. Creates the collection on first access.</p>
+            <pre><code>map.<span class="fn">computeIfAbsent</span>(key, k <span class="op">-&gt;</span> <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;()).<span class="fn">add</span>(val);</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Iterate entries</h3>
+            <p>Loop over all key-value pairs in a map.</p>
+            <pre><code><span class="kw">for</span> (<span class="kw">var</span> e : map.<span class="fn">entrySet</span>()) {
+    e.<span class="fn">getKey</span>(); e.<span class="fn">getValue</span>();
+}</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Max entry by value</h3>
+            <p>Find the entry with the highest value in a map.</p>
+            <pre><code>map.<span class="fn">entrySet</span>().<span class="fn">stream</span>()
+    .<span class="fn">max</span>(<span class="type">Comparator</span>.<span class="fn">comparingInt</span>(<span class="type">Map.Entry</span>::getValue))
+    .<span class="fn">orElseThrow</span>();</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Remove entries matching predicate</h3>
+            <p>Prune map values in-place. Here, keeping only keys whose list has duplicates.</p>
+            <pre><code>map.<span class="fn">values</span>().<span class="fn">removeIf</span>(list <span class="op">-&gt;</span> list.<span class="fn">size</span>() &lt; <span class="num">2</span>);</code></pre>
+        </div>
+    </section>
+
+    <!-- ==================== Collections ==================== -->
+    <section id="collections">
+        <h2>collections</h2>
+
+        <div class="snippet">
+            <h3>Typed HashMap</h3>
+            <pre><code><span class="type">Map</span>&lt;<span class="generic">Integer</span>, <span class="generic">Integer</span>&gt; map = <span class="kw">new</span> <span class="type">HashMap</span>&lt;&gt;();</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Unmodifiable list</h3>
+            <p>Create an immutable list. Throws <code>UnsupportedOperationException</code> on mutation.</p>
+            <pre><code><span class="type">List</span>.<span class="fn">of</span>(<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>)</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>List from array</h3>
+            <p>Returns a fixed-size list backed by the array. Supports <code>set()</code> but not <code>add()</code> or <code>remove()</code>.</p>
+            <pre><code><span class="type">Arrays</span>.<span class="fn">asList</span>(<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>)</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Priority queue (min-heap)</h3>
+            <p>Elements are dequeued in natural (ascending) order.</p>
+            <pre><code><span class="type">PriorityQueue</span>&lt;<span class="generic">Integer</span>&gt; pq = <span class="kw">new</span> <span class="type">PriorityQueue</span>&lt;&gt;();</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Priority queue (max-heap)</h3>
+            <p>Elements are dequeued in descending order.</p>
+            <pre><code><span class="type">PriorityQueue</span>&lt;<span class="generic">Integer</span>&gt; pq = <span class="kw">new</span> <span class="type">PriorityQueue</span>&lt;&gt;(<span class="type">Comparator</span>.<span class="fn">reverseOrder</span>());</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Deque as stack</h3>
+            <p>Preferred over the legacy <code>Stack</code> class. Useful for DFS, matching parentheses, and undo buffers.</p>
+            <pre><code><span class="type">Deque</span>&lt;<span class="generic">String</span>&gt; stack = <span class="kw">new</span> <span class="type">ArrayDeque</span>&lt;&gt;();
+stack.<span class="fn">push</span>(val);
+stack.<span class="fn">pop</span>();</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>LinkedHashMap (insertion order)</h3>
+            <p>A HashMap that maintains insertion order during iteration.</p>
+            <pre><code><span class="type">Map</span>&lt;<span class="generic">K</span>, <span class="generic">V</span>&gt; map = <span class="kw">new</span> <span class="type">LinkedHashMap</span>&lt;&gt;();</code></pre>
+        </div>
+    </section>
+
+    <!-- ==================== Streams ==================== -->
+    <section id="streams">
+        <h2>streams</h2>
+
+        <div class="snippet">
+            <h3>Filter + collect</h3>
+            <p>Keep elements matching a condition and collect into a list.</p>
+            <pre><code><span class="type">List</span>&lt;<span class="generic">Integer</span>&gt; positive = list.<span class="fn">stream</span>()
+    .<span class="fn">filter</span>(x <span class="op">-&gt;</span> x &gt; <span class="num">0</span>)
+    .<span class="fn">collect</span>(<span class="type">Collectors</span>.<span class="fn">toList</span>());</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Map + collect</h3>
+            <p>Transform each element and collect results.</p>
+            <pre><code><span class="type">List</span>&lt;<span class="generic">String</span>&gt; upper = list.<span class="fn">stream</span>()
+    .<span class="fn">map</span>(String::toUpperCase)
+    .<span class="fn">collect</span>(<span class="type">Collectors</span>.<span class="fn">toList</span>());</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Group by</h3>
+            <p>Partition elements into a map of key to list. Here, grouping integers by even/odd.</p>
+            <pre><code><span class="type">Map</span>&lt;<span class="generic">Integer</span>, <span class="generic">List</span>&lt;<span class="generic">Integer</span>&gt;&gt; groups = list.<span class="fn">stream</span>()
+    .<span class="fn">collect</span>(<span class="type">Collectors</span>.<span class="fn">groupingBy</span>(x <span class="op">-&gt;</span> x % <span class="num">2</span>));</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>FlatMap</h3>
+            <p>Flatten nested collections into a single stream.</p>
+            <pre><code><span class="type">List</span>&lt;<span class="generic">String</span>&gt; flat = nested.<span class="fn">stream</span>()
+    .<span class="fn">flatMap</span>(<span class="type">Collection</span>::stream)
+    .<span class="fn">collect</span>(<span class="type">Collectors</span>.<span class="fn">toList</span>());</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>IntStream range loop</h3>
+            <p>Iterate over a range of integers without a traditional for-loop.</p>
+            <pre><code><span class="type">IntStream</span>.<span class="fn">range</span>(<span class="num">0</span>, n).<span class="fn">forEach</span>(i <span class="op">-&gt;</span> { <span class="cm">/* use i */</span> });</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Max / Sum / Average</h3>
+            <p>Common numeric reductions on a list of integers.</p>
+            <pre><code><span class="kw">int</span> max = list.<span class="fn">stream</span>().<span class="fn">mapToInt</span>(Integer::intValue).<span class="fn">max</span>().<span class="fn">orElse</span>(<span class="num">0</span>);
+<span class="kw">int</span> sum = list.<span class="fn">stream</span>().<span class="fn">mapToInt</span>(Integer::intValue).<span class="fn">sum</span>();
+<span class="kw">double</span> avg = list.<span class="fn">stream</span>().<span class="fn">mapToInt</span>(Integer::intValue).<span class="fn">average</span>().<span class="fn">orElse</span>(<span class="num">0.0</span>);</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Max by field on objects</h3>
+            <p>Find the element with the highest value for a given property.</p>
+            <pre><code><span class="type">Person</span> oldest = people.<span class="fn">stream</span>()
+    .<span class="fn">max</span>(<span class="type">Comparator</span>.<span class="fn">comparingInt</span>(<span class="type">Person</span>::age))
+    .<span class="fn">orElseThrow</span>();</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Filter to new list</h3>
+            <p>Produces a mutable <code>ArrayList</code>.</p>
+            <pre><code><span class="type">List</span>&lt;<span class="generic">String</span>&gt; longNames = names.<span class="fn">stream</span>()
+    .<span class="fn">filter</span>(n <span class="op">-&gt;</span> n.<span class="fn">length</span>() &gt; <span class="num">3</span>)
+    .<span class="fn">collect</span>(<span class="type">Collectors</span>.<span class="fn">toList</span>());</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Collect to Set / Map</h3>
+            <p>Collect stream results into a Set or a Map keyed by a property.</p>
+            <pre><code><span class="type">Set</span>&lt;<span class="generic">String</span>&gt; unique = list.<span class="fn">stream</span>().<span class="fn">collect</span>(<span class="type">Collectors</span>.<span class="fn">toSet</span>());
+
+<span class="type">Map</span>&lt;<span class="generic">String</span>, <span class="generic">Integer</span>&gt; byName = people.<span class="fn">stream</span>()
+    .<span class="fn">collect</span>(<span class="type">Collectors</span>.<span class="fn">toMap</span>(<span class="type">Person</span>::name, <span class="type">Person</span>::age));</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Joining strings</h3>
+            <p>Concatenate stream elements with a delimiter.</p>
+            <pre><code><span class="type">String</span> csv = list.<span class="fn">stream</span>().<span class="fn">collect</span>(<span class="type">Collectors</span>.<span class="fn">joining</span>(<span class="str">", "</span>));</code></pre>
+        </div>
+    </section>
+
+    <!-- ==================== Concurrency ==================== -->
+    <section id="concurrency">
+        <h2>concurrency</h2>
+
+        <div class="snippet">
+            <h3>Thread with lambda</h3>
+            <p>Start a new thread with inline logic.</p>
+            <pre><code><span class="type">Thread</span> t = <span class="kw">new</span> <span class="type">Thread</span>(() <span class="op">-&gt;</span> {
+    <span class="cm">// work</span>
+});
+t.<span class="fn">start</span>();</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Blocking queue (producer/consumer)</h3>
+            <p>Thread-safe hand-off between producer and consumer threads. Both operations block when the queue is at capacity or empty.</p>
+            <pre><code><span class="type">BlockingQueue</span>&lt;<span class="generic">T</span>&gt; q = <span class="kw">new</span> <span class="type">LinkedBlockingQueue</span>&lt;&gt;();
+q.<span class="fn">put</span>(item);   <span class="cm">// blocks if full</span>
+q.<span class="fn">take</span>();      <span class="cm">// blocks until available</span></code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Executor + join all</h3>
+            <p>Submit tasks to a thread pool and wait for all to complete.</p>
+            <pre><code><span class="type">ExecutorService</span> exec = <span class="type">Executors</span>.<span class="fn">newFixedThreadPool</span>(n);
+exec.<span class="fn">submit</span>(() <span class="op">-&gt;</span> { <span class="cm">/* task */</span> });
+exec.<span class="fn">shutdown</span>();
+exec.<span class="fn">awaitTermination</span>(Long.MAX_VALUE, <span class="type">TimeUnit</span>.MILLISECONDS);</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>try-with-resources on ExecutorService (Java 19+)</h3>
+            <p>Auto-shutdown when the block exits.</p>
+            <pre><code><span class="kw">try</span> (<span class="kw">var</span> executor = <span class="type">Executors</span>.<span class="fn">newFixedThreadPool</span>(n)) {
+    executor.<span class="fn">submit</span>(() <span class="op">-&gt;</span> { <span class="cm">/* task */</span> });
+}  <span class="cm">// auto shutdown</span></code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Atomic result from thread</h3>
+            <p>Return a value from a thread when no <code>Future</code> is available.</p>
+            <pre><code><span class="type">AtomicInteger</span> result = <span class="kw">new</span> <span class="type">AtomicInteger</span>();
+<span class="type">Thread</span> t = <span class="kw">new</span> <span class="type">Thread</span>(() <span class="op">-&gt;</span> result.<span class="fn">set</span>(<span class="num">42</span>));
+t.<span class="fn">start</span>();
+t.<span class="fn">join</span>();
+<span class="kw">int</span> value = result.<span class="fn">get</span>();</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Thread-safe collections</h3>
+            <p>Concurrent map, set, and list for shared mutable state across threads.</p>
+            <pre><code><span class="type">Map</span>&lt;<span class="generic">K</span>, <span class="generic">V</span>&gt; map = <span class="kw">new</span> <span class="type">ConcurrentHashMap</span>&lt;&gt;();
+<span class="type">Set</span>&lt;<span class="generic">String</span>&gt; visited = <span class="type">ConcurrentHashMap</span>.<span class="fn">newKeySet</span>();
+<span class="type">List</span>&lt;<span class="generic">T</span>&gt; list = <span class="type">Collections</span>.<span class="fn">synchronizedList</span>(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;());</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>ConcurrentHashMap + synchronizedList</h3>
+            <p>Multiple threads appending to per-key lists. <code>computeIfAbsent</code> is atomic on CHM, but the list itself needs synchronization.</p>
+            <pre><code><span class="type">ConcurrentHashMap</span>&lt;<span class="generic">String</span>, <span class="generic">List</span>&lt;<span class="generic">Path</span>&gt;&gt; map = <span class="kw">new</span> <span class="type">ConcurrentHashMap</span>&lt;&gt;();
+map.<span class="fn">computeIfAbsent</span>(key, k <span class="op">-&gt;</span> <span class="type">Collections</span>.<span class="fn">synchronizedList</span>(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;()))
+   .<span class="fn">add</span>(val);</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>InterruptedException handling</h3>
+            <p>Always re-set the interrupt flag so callers know the thread was interrupted.</p>
+            <pre><code>} <span class="kw">catch</span> (<span class="type">InterruptedException</span> e) {
+    <span class="type">Thread</span>.<span class="fn">currentThread</span>().<span class="fn">interrupt</span>();
+    <span class="kw">return</span>;
+}</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Thread + join all</h3>
+            <p>When you need per-worker identity (e.g. mailboxes, partitions).</p>
+            <pre><code><span class="type">List</span>&lt;<span class="generic">Thread</span>&gt; threads = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+    <span class="kw">final</span> <span class="kw">int</span> id = i;
+    <span class="type">Thread</span> t = <span class="kw">new</span> <span class="type">Thread</span>(() <span class="op">-&gt;</span> { <span class="cm">/* use id */</span> });
+    t.<span class="fn">start</span>();
+    threads.<span class="fn">add</span>(t);
+}
+<span class="kw">for</span> (<span class="type">Thread</span> t : threads) t.<span class="fn">join</span>();</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Per-key rate limiting</h3>
+            <p>Throttle per host/key without blocking other keys. Computes the wait time inside the atomic <code>compute</code> call, then sleeps outside the lock.</p>
+            <pre><code><span class="type">ConcurrentHashMap</span>&lt;<span class="generic">String</span>, <span class="generic">Long</span>&gt; lastAccessTime = <span class="kw">new</span> <span class="type">ConcurrentHashMap</span>&lt;&gt;();
+
+<span class="kw">long</span>[] wait = {<span class="num">0</span>};
+lastAccessTime.<span class="fn">compute</span>(host, (h, lastTime) <span class="op">-&gt;</span> {
+    <span class="kw">long</span> now = <span class="type">System</span>.<span class="fn">currentTimeMillis</span>();
+    <span class="kw">if</span> (lastTime != <span class="kw">null</span>) {
+        <span class="kw">long</span> elapsed = now - lastTime;
+        <span class="kw">if</span> (elapsed &lt; delayMs) {
+            wait[<span class="num">0</span>] = delayMs - elapsed;
+            <span class="kw">return</span> now + wait[<span class="num">0</span>];
+        }
+    }
+    <span class="kw">return</span> now;
+});
+<span class="kw">if</span> (wait[<span class="num">0</span>] &gt; <span class="num">0</span>) <span class="type">Thread</span>.<span class="fn">sleep</span>(wait[<span class="num">0</span>]); <span class="cm">// sleep OUTSIDE compute</span></code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>ForkJoinPool for custom parallelism</h3>
+            <p>Bound <code>parallelStream</code> to N threads instead of using the common pool.</p>
+            <pre><code><span class="type">ForkJoinPool</span> pool = <span class="kw">new</span> <span class="type">ForkJoinPool</span>(numThreads);
+<span class="kw">try</span> {
+    pool.<span class="fn">submit</span>(() <span class="op">-&gt;</span>
+        files.<span class="fn">parallelStream</span>().<span class="fn">forEach</span>(path <span class="op">-&gt;</span> { <span class="cm">/* process */</span> })
+    ).<span class="fn">get</span>();
+} <span class="kw">catch</span> (<span class="type">ExecutionException</span> e) {
+    <span class="kw">throw</span> <span class="kw">new</span> <span class="type">RuntimeException</span>(e.<span class="fn">getCause</span>());
+} <span class="kw">finally</span> {
+    pool.<span class="fn">shutdown</span>();
+}</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Batch futures (round-based BFS)</h3>
+            <p>Concurrent crawl/search where each round discovers the next frontier. Submit all work, then collect results before the next round.</p>
+            <pre><code><span class="type">Queue</span>&lt;<span class="generic">String</span>&gt; toProcess = <span class="kw">new</span> <span class="type">LinkedList</span>&lt;&gt;();
+<span class="type">Set</span>&lt;<span class="generic">String</span>&gt; visited = <span class="kw">new</span> <span class="type">HashSet</span>&lt;&gt;();
+toProcess.<span class="fn">add</span>(seed);
+
+<span class="kw">while</span> (!toProcess.<span class="fn">isEmpty</span>()) {
+    <span class="type">List</span>&lt;<span class="generic">Future</span>&lt;<span class="generic">List</span>&lt;<span class="generic">String</span>&gt;&gt;&gt; futures = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+    <span class="kw">while</span> (!toProcess.<span class="fn">isEmpty</span>())
+        futures.<span class="fn">add</span>(executor.<span class="fn">submit</span>(() <span class="op">-&gt;</span> fetcher.<span class="fn">fetch</span>(toProcess.<span class="fn">poll</span>())));
+    <span class="kw">for</span> (<span class="kw">var</span> f : futures) {
+        <span class="kw">for</span> (<span class="type">String</span> result : f.<span class="fn">get</span>()) {
+            <span class="kw">if</span> (visited.<span class="fn">add</span>(result)) toProcess.<span class="fn">add</span>(result);
+        }
+    }
+}</code></pre>
+        </div>
+    </section>
+
+    <!-- ==================== Files & IO ==================== -->
+    <section id="files-io">
+        <h2>files &amp; io</h2>
+
+        <div class="snippet">
+            <h3>Read all bytes / lines</h3>
+            <pre><code><span class="kw">byte</span>[] bytes = <span class="type">Files</span>.<span class="fn">readAllBytes</span>(<span class="type">Path</span>.<span class="fn">of</span>(path));
+<span class="type">List</span>&lt;<span class="generic">String</span>&gt; lines = <span class="type">Files</span>.<span class="fn">readAllLines</span>(<span class="type">Path</span>.<span class="fn">of</span>(path));</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Write string to file</h3>
+            <pre><code><span class="type">Files</span>.<span class="fn">writeString</span>(<span class="type">Path</span>.<span class="fn">of</span>(path), content);</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Stream chunk hash</h3>
+            <p>Hash large files without loading the entire contents into memory.</p>
+            <pre><code><span class="kw">var</span> md = <span class="type">MessageDigest</span>.<span class="fn">getInstance</span>(<span class="str">"SHA-256"</span>);
+<span class="kw">try</span> (<span class="kw">var</span> is = <span class="type">Files</span>.<span class="fn">newInputStream</span>(path)) {
+    <span class="kw">byte</span>[] buf = <span class="kw">new</span> <span class="kw">byte</span>[<span class="num">8192</span>];
+    <span class="kw">int</span> n;
+    <span class="kw">while</span> ((n = is.<span class="fn">read</span>(buf)) != -<span class="num">1</span>)
+        md.<span class="fn">update</span>(buf, <span class="num">0</span>, n);
+}
+<span class="kw">byte</span>[] hash = md.<span class="fn">digest</span>();</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Walk directory</h3>
+            <p>Recursive file search. The stream must be closed (use try-with-resources).</p>
+            <pre><code><span class="kw">try</span> (<span class="kw">var</span> paths = <span class="type">Files</span>.<span class="fn">walk</span>(dir)) {
+    paths.<span class="fn">filter</span>(<span class="type">Files</span>::isRegularFile)
+         .<span class="fn">forEach</span>(p <span class="op">-&gt;</span> { <span class="cm">/* process p */</span> });
+}</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Atomic file write</h3>
+            <p>Write to a temp file, then atomically move it into place. Prevents readers from seeing partial writes.</p>
+            <pre><code><span class="type">Path</span> tmp = path.<span class="fn">resolveSibling</span>(path.<span class="fn">getFileName</span>() + <span class="str">".tmp"</span>);
+<span class="kw">try</span> (<span class="kw">var</span> w = <span class="type">Files</span>.<span class="fn">newBufferedWriter</span>(tmp)) {
+    <span class="cm">// write content to tmp</span>
+}
+<span class="type">Files</span>.<span class="fn">move</span>(tmp, path, <span class="type">StandardCopyOption</span>.ATOMIC_MOVE);</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Buffered writer (append mode)</h3>
+            <pre><code><span class="type">Files</span>.<span class="fn">newBufferedWriter</span>(path, <span class="type">StandardOpenOption</span>.APPEND)</code></pre>
+        </div>
+    </section>
+
+    <!-- ==================== Strings ==================== -->
+    <section id="strings">
+        <h2>strings</h2>
+
+        <div class="snippet">
+            <h3>Split and parse</h3>
+            <p>Split a delimited string and parse the parts.</p>
+            <pre><code><span class="type">String</span>[] parts = s.<span class="fn">split</span>(<span class="str">":"</span>);
+<span class="kw">int</span> a = <span class="type">Integer</span>.<span class="fn">parseInt</span>(parts[<span class="num">0</span>]);
+<span class="kw">int</span> b = <span class="type">Integer</span>.<span class="fn">parseInt</span>(parts[<span class="num">1</span>]);</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>startsWith at index</h3>
+            <p>Check for a substring match at position <code>i</code> without allocating a new string.</p>
+            <pre><code>text.<span class="fn">startsWith</span>(token, i)</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Char iteration</h3>
+            <pre><code><span class="kw">for</span> (<span class="kw">char</span> c : word.<span class="fn">toCharArray</span>()) { <span class="cm">/* use c */</span> }</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Format byte as hex</h3>
+            <pre><code><span class="type">String</span>.<span class="fn">format</span>(<span class="str">"%02x"</span>, b)</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Contains / indexOf</h3>
+            <pre><code>s.<span class="fn">contains</span>(<span class="str">"x"</span>);
+s.<span class="fn">indexOf</span>(<span class="str">'#'</span>);</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Substring up to character</h3>
+            <pre><code>s.<span class="fn">substring</span>(<span class="num">0</span>, s.<span class="fn">indexOf</span>(<span class="str">'#'</span>))</code></pre>
+        </div>
+    </section>
+
+    <!-- ==================== Patterns ==================== -->
+    <section id="patterns">
+        <h2>patterns</h2>
+
+        <div class="snippet">
+            <h3>BFS skeleton</h3>
+            <p>Breadth-first search over a graph or state space.</p>
+            <pre><code><span class="type">Queue</span>&lt;<span class="generic">T</span>&gt; q = <span class="kw">new</span> <span class="type">LinkedList</span>&lt;&gt;();
+<span class="type">Set</span>&lt;<span class="generic">T</span>&gt; visited = <span class="kw">new</span> <span class="type">HashSet</span>&lt;&gt;();
+q.<span class="fn">add</span>(start);
+visited.<span class="fn">add</span>(start);
+
+<span class="kw">while</span> (!q.<span class="fn">isEmpty</span>()) {
+    <span class="type">T</span> cur = q.<span class="fn">poll</span>();
+    <span class="kw">for</span> (<span class="type">T</span> next : <span class="fn">neighbors</span>(cur))
+        <span class="kw">if</span> (visited.<span class="fn">add</span>(next)) q.<span class="fn">add</span>(next);
+}</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>BFS reachability check</h3>
+            <p>Determine if a target node is reachable from a source in a directed graph.</p>
+            <pre><code><span class="kw">boolean</span> <span class="fn">isReachable</span>(<span class="type">String</span> from, <span class="type">String</span> target,
+                     <span class="type">Map</span>&lt;<span class="generic">String</span>, <span class="generic">Set</span>&lt;<span class="generic">String</span>&gt;&gt; graph) {
+    <span class="kw">var</span> visited = <span class="kw">new</span> <span class="type">HashSet</span>&lt;<span class="generic">String</span>&gt;();
+    <span class="kw">var</span> queue = <span class="kw">new</span> <span class="type">LinkedList</span>&lt;<span class="generic">String</span>&gt;();
+    queue.<span class="fn">add</span>(from);
+    <span class="kw">while</span> (!queue.<span class="fn">isEmpty</span>()) {
+        <span class="kw">var</span> current = queue.<span class="fn">poll</span>();
+        <span class="kw">if</span> (current.<span class="fn">equals</span>(target)) <span class="kw">return</span> <span class="kw">true</span>;
+        <span class="kw">if</span> (visited.<span class="fn">add</span>(current))
+            queue.<span class="fn">addAll</span>(graph.<span class="fn">getOrDefault</span>(current, <span class="type">Set</span>.<span class="fn">of</span>()));
+    }
+    <span class="kw">return</span> <span class="kw">false</span>;
+}</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>DFS skeleton (iterative)</h3>
+            <p>Depth-first search using an explicit stack. Avoids recursion stack limits on deep graphs.</p>
+            <pre><code><span class="type">Deque</span>&lt;<span class="generic">T</span>&gt; stack = <span class="kw">new</span> <span class="type">ArrayDeque</span>&lt;&gt;();
+<span class="type">Set</span>&lt;<span class="generic">T</span>&gt; visited = <span class="kw">new</span> <span class="type">HashSet</span>&lt;&gt;();
+stack.<span class="fn">push</span>(start);
+visited.<span class="fn">add</span>(start);
+
+<span class="kw">while</span> (!stack.<span class="fn">isEmpty</span>()) {
+    <span class="type">T</span> cur = stack.<span class="fn">pop</span>();
+    <span class="kw">for</span> (<span class="type">T</span> next : <span class="fn">neighbors</span>(cur))
+        <span class="kw">if</span> (visited.<span class="fn">add</span>(next)) stack.<span class="fn">push</span>(next);
+}</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>DFS skeleton (recursive)</h3>
+            <p>Cleaner when you need pre/post-order processing or backtracking.</p>
+            <pre><code><span class="type">Set</span>&lt;<span class="generic">T</span>&gt; visited = <span class="kw">new</span> <span class="type">HashSet</span>&lt;&gt;();
+
+<span class="kw">void</span> <span class="fn">dfs</span>(<span class="type">T</span> node) {
+    visited.<span class="fn">add</span>(node);
+    <span class="cm">// pre-order work here</span>
+    <span class="kw">for</span> (<span class="type">T</span> next : <span class="fn">neighbors</span>(node))
+        <span class="kw">if</span> (!visited.<span class="fn">contains</span>(next)) <span class="fn">dfs</span>(next);
+    <span class="cm">// post-order work here</span>
+}</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Prefix match length</h3>
+            <p>Find where two sequences diverge. Useful for comparing stack traces or computing diffs.</p>
+            <pre><code><span class="kw">int</span> prefix = <span class="num">0</span>;
+<span class="kw">while</span> (prefix &lt; a.<span class="fn">size</span>() &amp;&amp; prefix &lt; b.<span class="fn">size</span>()
+       &amp;&amp; a.<span class="fn">get</span>(prefix).<span class="fn">equals</span>(b.<span class="fn">get</span>(prefix)))
+    prefix++;</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Local record as map key</h3>
+            <p>Records provide free <code>equals</code>/<code>hashCode</code>. Use as a composite key without writing boilerplate.</p>
+            <pre><code><span class="kw">record</span> <span class="type">Entry</span>(<span class="type">String</span> name, <span class="kw">int</span> depth) {}
+<span class="type">Map</span>&lt;<span class="generic">Entry</span>, <span class="generic">Integer</span>&gt; map = <span class="kw">new</span> <span class="type">HashMap</span>&lt;&gt;();</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Poison pill shutdown</h3>
+            <p>Signal consumers to stop by placing a sentinel value on the queue. Each consumer re-posts the poison so all workers shut down.</p>
+            <pre><code><span class="kw">static</span> <span class="kw">final</span> <span class="type">String</span> POISON = <span class="str">"__STOP__"</span>;
+
+<span class="cm">// producer</span>
+queue.<span class="fn">put</span>(POISON);
+
+<span class="cm">// consumer</span>
+<span class="type">String</span> item = queue.<span class="fn">take</span>();
+<span class="kw">if</span> (item.<span class="fn">equals</span>(POISON)) {
+    queue.<span class="fn">put</span>(POISON);  <span class="cm">// re-post for other consumers</span>
+    <span class="kw">return</span>;
+}</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>LRU Cache (LinkedHashMap)</h3>
+            <p>Pass <code>true</code> for access-order mode. Override <code>removeEldestEntry</code> for automatic eviction when the cache exceeds capacity.</p>
+            <pre><code><span class="kw">int</span> capacity = <span class="num">100</span>;
+<span class="type">LinkedHashMap</span>&lt;<span class="generic">K</span>, <span class="generic">V</span>&gt; cache = <span class="kw">new</span> <span class="type">LinkedHashMap</span>&lt;&gt;(capacity + <span class="num">1</span>, <span class="num">0.75f</span>, <span class="kw">true</span>) {
+    <span class="ann">@Override</span>
+    <span class="kw">protected</span> <span class="kw">boolean</span> <span class="fn">removeEldestEntry</span>(<span class="type">Map.Entry</span>&lt;<span class="generic">K</span>, <span class="generic">V</span>&gt; eldest) {
+        <span class="kw">return</span> <span class="fn">size</span>() &gt; capacity;
+    }
+};
+<span class="cm">// get() promotes to most-recent; iteration = least → most recent</span></code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Trie insert + longest match</h3>
+            <p>O(L) vocabulary lookup for tokenizers, autocomplete, or IP routing tables.</p>
+            <pre><code><span class="cm">// insert a word</span>
+<span class="type">TrieNode</span> node = root;
+<span class="kw">for</span> (<span class="kw">char</span> c : word.<span class="fn">toCharArray</span>())
+    node = node.children.<span class="fn">computeIfAbsent</span>(c, k <span class="op">-&gt;</span> <span class="kw">new</span> <span class="type">TrieNode</span>());
+node.isEnd = <span class="kw">true</span>;
+
+<span class="cm">// find longest match starting at index i</span>
+<span class="type">TrieNode</span> n = root;
+<span class="kw">int</span> matchLen = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="kw">int</span> j = i; j &lt; text.<span class="fn">length</span>(); j++) {
+    n = n.children.<span class="fn">get</span>(text.<span class="fn">charAt</span>(j));
+    <span class="kw">if</span> (n == <span class="kw">null</span>) <span class="kw">break</span>;
+    <span class="kw">if</span> (n.isEnd) matchLen = j - i + <span class="num">1</span>;
+}</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Multi-stage dedup</h3>
+            <p>Progressively expensive checks to find duplicate files. Group by size first (cheap), then partial hash, then full hash. Non-duplicates are pruned early.</p>
+            <pre><code><span class="cm">// Stage 1: group by file size (cheap)</span>
+<span class="type">Map</span>&lt;<span class="generic">Long</span>, <span class="generic">List</span>&lt;<span class="generic">Path</span>&gt;&gt; bySize = <span class="kw">new</span> <span class="type">HashMap</span>&lt;&gt;();
+<span class="type">Files</span>.<span class="fn">walk</span>(dir).<span class="fn">filter</span>(<span class="type">Files</span>::isRegularFile)
+    .<span class="fn">forEach</span>(p <span class="op">-&gt;</span> bySize.<span class="fn">computeIfAbsent</span>(
+        <span class="type">Files</span>.<span class="fn">size</span>(p), k <span class="op">-&gt;</span> <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;()).<span class="fn">add</span>(p));
+bySize.<span class="fn">values</span>().<span class="fn">removeIf</span>(l <span class="op">-&gt;</span> l.<span class="fn">size</span>() &lt; <span class="num">2</span>);
+
+<span class="cm">// Stage 2: partial hash (first 4KB) on size-matched groups</span>
+<span class="cm">// Stage 3: full hash on partial-hash-matched groups</span></code></pre>
+        </div>
+    </section>
+
+    <!-- ==================== URI / URL Handling ==================== -->
+    <section id="uri-url">
+        <h2>uri / url handling</h2>
+
+        <div class="snippet">
+            <h3>Parse host from URL</h3>
+            <pre><code><span class="type">String</span> host = <span class="type">URI</span>.<span class="fn">create</span>(url).<span class="fn">getHost</span>();</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Strip fragment (#anchor)</h3>
+            <pre><code><span class="kw">int</span> idx = url.<span class="fn">indexOf</span>(<span class="str">'#'</span>);
+<span class="type">String</span> clean = idx &gt;= <span class="num">0</span> ? url.<span class="fn">substring</span>(<span class="num">0</span>, idx) : url;</code></pre>
+        </div>
+    </section>
+
+    <!-- ==================== Persistence / WAL ==================== -->
+    <section id="persistence-wal">
+        <h2>persistence / wal</h2>
+
+        <div class="snippet">
+            <h3>Write-ahead log (append mode)</h3>
+            <p>Log mutations before applying them so they can be replayed after a crash.</p>
+            <pre><code><span class="type">BufferedWriter</span> wal = <span class="type">Files</span>.<span class="fn">newBufferedWriter</span>(walPath,
+    <span class="type">StandardOpenOption</span>.CREATE, <span class="type">StandardOpenOption</span>.APPEND);
+
+<span class="cm">// on each put:</span>
+wal.<span class="fn">write</span>(<span class="str">"PUT\t"</span> + key + <span class="str">"\t"</span> + value + <span class="str">"\n"</span>);
+wal.<span class="fn">flush</span>();  <span class="cm">// flush immediately for durability</span></code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>WAL recovery (replay)</h3>
+            <p>Re-apply logged mutations on startup. Malformed lines from mid-write crashes are skipped.</p>
+            <pre><code><span class="kw">for</span> (<span class="type">String</span> line : <span class="type">Files</span>.<span class="fn">readAllLines</span>(walPath)) {
+    <span class="type">String</span>[] parts = line.<span class="fn">split</span>(<span class="str">"\t"</span>, <span class="num">3</span>);
+    <span class="kw">if</span> (parts.length == <span class="num">3</span> &amp;&amp; <span class="str">"PUT"</span>.<span class="fn">equals</span>(parts[<span class="num">0</span>]))
+        map.<span class="fn">put</span>(parts[<span class="num">1</span>], parts[<span class="num">2</span>]);
+    <span class="cm">// skip malformed lines (partial writes from crash)</span>
+}</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Escape/unescape for delimited formats</h3>
+            <p>When values might contain your delimiter (e.g. tabs).</p>
+            <pre><code><span class="kw">static</span> <span class="type">String</span> <span class="fn">escape</span>(<span class="type">String</span> s) {
+    <span class="kw">return</span> s.<span class="fn">replace</span>(<span class="str">"\\"</span>, <span class="str">"\\\\"</span>)
+            .<span class="fn">replace</span>(<span class="str">"\t"</span>, <span class="str">"\\t"</span>)
+            .<span class="fn">replace</span>(<span class="str">"\n"</span>, <span class="str">"\\n"</span>);
+}</code></pre>
+        </div>
+    </section>
+
+    <!-- ==================== Java Language ==================== -->
+    <section id="language">
+        <h2>java language</h2>
+
+        <div class="snippet">
+            <h3>Pattern-matching instanceof</h3>
+            <p>Combines type check, cast, and null safety in a single expression.</p>
+            <pre><code><span class="kw">if</span> (!(obj <span class="kw">instanceof</span> <span class="type">Event</span> event)) <span class="kw">return</span> <span class="kw">false</span>;
+<span class="cm">// 'event' is now in scope as Event</span></code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Switch expression (arrow form)</h3>
+            <pre><code><span class="kw">switch</span> (ch) {
+    <span class="kw">case</span> <span class="str">'\\'</span> <span class="op">-&gt;</span> { sb.<span class="fn">append</span>(<span class="str">'\\'</span>); i++; }
+    <span class="kw">case</span> <span class="str">'t'</span>  <span class="op">-&gt;</span> { sb.<span class="fn">append</span>(<span class="str">'\t'</span>); i++; }
+    <span class="kw">default</span>   <span class="op">-&gt;</span> sb.<span class="fn">append</span>(ch);
+}</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Nested map access</h3>
+            <p>Safe lookup in <code>Map&lt;K, Map&lt;K2, V&gt;&gt;</code> without null checks.</p>
+            <pre><code><span class="kw">return</span> users.<span class="fn">getOrDefault</span>(userId, <span class="type">Collections</span>.<span class="fn">emptyMap</span>()).<span class="fn">get</span>(activityType);</code></pre>
+        </div>
+
+        <div class="snippet">
+            <h3>Collision-free cache key</h3>
+            <p>Build a cache key from mixed types or variable-length parts without ambiguity. Uses type and length prefixes to prevent collisions.</p>
+            <pre><code><span class="type">StringBuilder</span> sb = <span class="kw">new</span> <span class="type">StringBuilder</span>();
+<span class="kw">for</span> (<span class="type">Object</span> part : parts) {
+    <span class="type">String</span> type = part.<span class="fn">getClass</span>().<span class="fn">getSimpleName</span>();
+    <span class="type">String</span> val = <span class="type">String</span>.<span class="fn">valueOf</span>(part);
+    sb.<span class="fn">append</span>(type).<span class="fn">append</span>(<span class="str">':'</span>).<span class="fn">append</span>(val.<span class="fn">length</span>())
+      .<span class="fn">append</span>(<span class="str">':'</span>).<span class="fn">append</span>(val).<span class="fn">append</span>(<span class="str">'\u001f'</span>);
+}
+<span class="type">String</span> cacheKey = sb.<span class="fn">toString</span>();</code></pre>
+        </div>
+    </section>
+
+    <footer>
+        <a href="/">gunk.dev</a> &middot; <a href="https://github.com/patflynn/interview-questions">source</a>
+    </footer>
+</body>
+</html>
