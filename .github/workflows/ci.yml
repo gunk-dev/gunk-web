@@ -27,7 +27,8 @@ jobs:
 
       - name: Verify output
         run: |
-          test -f result/index.html
+          test -d result/www
+          test -f result/www/index.html
           test -f result/Caddyfile
 
       - name: Lint
