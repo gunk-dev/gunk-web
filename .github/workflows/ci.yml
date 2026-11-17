@@ -23,13 +23,7 @@ jobs:
         run: nix flake check
 
       - name: Build
-        run: nix build
-
-      - name: Verify output
-        run: |
-          test -d result/www
-          test -f result/www/index.html
-          test -f result/Caddyfile
+        run: nix build .#checks.x86_64-linux.build
 
       - name: Lint
-        run: nix develop -c nixfmt --check .
+        run: nix build .#checks.x86_64-linux.fmt
