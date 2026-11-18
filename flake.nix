@@ -60,6 +60,26 @@
                 find . -name '*.nix' -exec nixfmt --check {} +
                 touch $out
               '';
+
+          # Every Markdown file is formatted as the floor's prose-format check
+          # requires. Only .md files are in the source, so other edits do not
+          # rerun this check.
+          prose-format =
+            pkgs.runCommand "gunk-web-check-prose-format"
+              {
+                nativeBuildInputs = [ pkgs.prettier ];
+                src = lib.fileset.toSource {
+                  root = ./.;
+                  fileset = lib.fileset.fileFilter (file: file.hasExt "md") ./.;
+                };
+              }
+              ''
+                cd $src
+                # The platform offers no shared definition of this check, so its command is restated here.
+                find . -name '*.md' -exec prettier --prose-wrap always --print-width 100 \
+                  --embedded-language-formatting off --check {} +
+                touch $out
+              '';
         };
 
         devShells.default = pkgs.mkShell {
