@@ -2,7 +2,9 @@
 
 ## Checks
 
-Each check CI runs is a flake check, built without network access. On x86_64-linux:
+Changes are proposed to the valley. `valley checks` names the checks a change requires, the valley
+builds them, and a person approves the change. Each check is a flake check, built without network
+access. On x86_64-linux:
 
 ```sh
 nix build .#checks.x86_64-linux.build         # the site builds and outputs www/index.html and Caddyfile
